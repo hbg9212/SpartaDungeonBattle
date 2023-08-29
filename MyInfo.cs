@@ -25,6 +25,7 @@ namespace SpartaDungeonBattle
             Console.WriteLine($"{(myAddStat[1] > 0 ? "(+" + myAddStat[1] + ")" : "")}");
             Console.ResetColor();
             Console.WriteLine($"체력 : {player.Hp}");
+            Console.WriteLine($"마력 : {player.Mp}");
             Console.WriteLine($"Gold : {player.Gold} G");
             Console.WriteLine();
 
