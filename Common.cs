@@ -1,6 +1,9 @@
 ﻿using Newtonsoft.Json;
 using System.Reflection;
-using static SpartaDungeonBattle.Program;
+using static SpartaDungeonBattle.Inventory;
+using static SpartaDungeonBattle.Shop;
+using static SpartaDungeonBattle.MyInfo;
+using static SpartaDungeonBattle.Battle;
 
 namespace SpartaDungeonBattle
 {
@@ -19,7 +22,7 @@ namespace SpartaDungeonBattle
         public static Character player;
         public static List<Item> myItem = new();
         public static List<Item> shop = new();
-        public static int[] maxExp = { 0, 1, 2, 3, 4 };
+        public static int[] maxExp = { 0, 10, 35, 65, 100 };
 
         //아이템 정렬관련 변수 선언
         public static int sort = 0;
@@ -86,6 +89,42 @@ namespace SpartaDungeonBattle
 
             //장비 추가 스텟 적용
             AddStat();
+
+            //게임 시작 화면
+            DisplayGameIntro();
+        }
+
+        /// <summary>게임 초기 화면 출력</summary>
+        public static void DisplayGameIntro()
+        {
+            Console.Clear();
+            Console.WriteLine("스파르타 마을에 오신 여러분 환영합니다.");
+            Console.WriteLine("이곳에서 전전으로 들어가기 전 활동을 할 수 있습니다.");
+            Console.WriteLine();
+            Console.WriteLine("1. 상태보기");
+            Console.WriteLine("2. 인벤토리");
+            Console.WriteLine("3. 상점");
+            Console.WriteLine("4. 전투시작");
+            Console.WriteLine();
+            Console.WriteLine("원하시는 행동을 입력해주세요.");
+
+            int input = CheckValidInput(1, 4);
+            switch (input)
+            {
+                case 1:
+                    DisplayMyInfo();
+                    break;
+                case 2:
+                    DisplayInventory();
+                    break;
+                case 3:
+                    DisplayShop();
+                    break;
+                case 4:
+                    AddStat();
+                    DisplayBattle();
+                    break;
+            }
         }
 
         /// <summary>착용한 장비의 스텟 계산 메소드</summary>

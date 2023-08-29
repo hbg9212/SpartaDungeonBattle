@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using static SpartaDungeonBattle.Program;
 using static SpartaDungeonBattle.Common;
 
 namespace SpartaDungeonBattle
