@@ -42,6 +42,8 @@ namespace SpartaDungeonBattle
             public int Mp { get; set; }
             public int Gold { get; set; }
             public int Exp { get; set; }
+            public int HpPortion { get; set; }
+            public int MpPortion { get; set; }
         }
 
         public class Item

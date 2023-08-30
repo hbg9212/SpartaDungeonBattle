@@ -1,7 +1,5 @@
-﻿using System;
-using static SpartaDungeonBattle.CharacterInfo;
+﻿using static SpartaDungeonBattle.CharacterInfo;
 using static SpartaDungeonBattle.Common;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace SpartaDungeonBattle
 {
@@ -362,7 +360,7 @@ namespace SpartaDungeonBattle
         {
             Skill[] skills = SkillSet[(int)player.Job];
 
-            if (player.Mp > skills[index].Mp)
+            if (player.Mp >= skills[index].Mp)
             {
                 if (input > 0)
                 {
@@ -577,6 +575,13 @@ namespace SpartaDungeonBattle
                         {
                             if (monsterList.FindLastIndex(i => i.IsLive == true) == -1) 
                             {
+                                // 경험치 계산
+                                int addExp = 0;
+                                foreach(Monster monster in monsterList)
+                                {
+                                    addExp += monster.Level;
+                                }
+
                                 //승리
                                 Console.Clear();
                                 Console.ForegroundColor = ConsoleColor.Yellow;
@@ -587,11 +592,63 @@ namespace SpartaDungeonBattle
                                 Console.WriteLine();
                                 Console.WriteLine($"던전에서 몬스터 {monsterList.Count}를 잡았습니다.");
                                 Console.WriteLine();
-                                Console.WriteLine("0. 다음");
+                                Console.WriteLine("[캐릭터 정보]");
+                                Console.Write($"Lv.{player.Level} {player.Name}");
+                                if (player.Level < 5)
+                                {
+                                    if (player.Exp + addExp >= maxExp[player.Level])
+                                    {
+                                        //Level UP
+                                        Console.Write($" -> Lv.{player.Level + 1} {player.Name}");
+                                    }
+                                }
                                 Console.WriteLine();
-
+                                Console.WriteLine($"HP {player.Hp}");
                                 player.Mp += 10;
                                 if (player.Mp > 50) player.Mp = 50;
+
+                                Console.WriteLine($"MP {player.Mp}");
+                                Console.WriteLine($"exp {player.Exp} -> {player.Exp + addExp}");
+                                if (player.Exp + addExp >= maxExp[player.Level])
+                                {
+                                    // Level UP 당 공격력 0.5, 방어력 1;
+                                    int addAtk = player.Level % 2 == 0 ? 1 : 0;
+                                    int addDef = 1;
+
+                                    Console.WriteLine($"공격력 {player.Atk} -> {player.Atk + addAtk}");
+                                    Console.WriteLine($"방어력 {player.Def} -> {player.Def + addDef}");
+
+                                    player.Atk += addAtk;
+                                    player.Def += addDef;
+                                }
+                                player.Exp += addExp;
+                                Console.WriteLine();
+                                Console.WriteLine("[획득 아이템]");
+                                Random rand = new Random();
+                                int error = (int)(addExp * 0.5);
+                                int addGold = rand.Next(addExp - error, addExp + error) * 40;
+                                Console.WriteLine($"Gold {player.Gold} G -> {player.Gold + addGold} G");
+                                player.Gold += addGold;
+
+                                //포션 40% 확률로 획득
+                                bool IsHpPortion = Probability(40.0f);
+                                bool IsMpPortion = Probability(40.0f);
+
+                                if( IsHpPortion )
+                                {
+                                    Console.WriteLine($"Hp 포션 {player.HpPortion} -> {player.HpPortion +1}");
+                                    player.HpPortion++;
+                                }
+
+                                if (IsMpPortion)
+                                {
+                                    Console.WriteLine($"Mp 포션 {player.MpPortion} -> {player.MpPortion + 1}");
+                                    player.MpPortion++;
+                                }
+
+                                Console.WriteLine();
+                                Console.WriteLine("0. 다음");
+                                Console.WriteLine();
 
                                 int input = CheckValidInput(0, 0);
                                 switch (input)
