@@ -5,6 +5,7 @@ using static SpartaDungeonBattle.Shop;
 using static SpartaDungeonBattle.MyInfo;
 using static SpartaDungeonBattle.Battle;
 using static SpartaDungeonBattle.CharacterInfo;
+using static SpartaDungeonBattle.Portion;
 
 namespace SpartaDungeonBattle
 {
@@ -135,6 +136,9 @@ namespace SpartaDungeonBattle
                 case 4:
                     AddStat();
                     SetMonsterList();
+                    break;
+                case 5:
+                    DisplayPortion("");
                     break;
             }
         }
