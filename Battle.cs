@@ -24,6 +24,31 @@ namespace SpartaDungeonBattle
 
         public static List<Monster> monsterList = new List<Monster>();
 
+
+        /// <summary>확률 계산 메소드</summary>
+        public static bool Probability(float loss)
+        {
+            Random rand = new Random();
+            // 0 : 실패, 1 : 성공
+            int ran = rand.Next(0, 101);
+            float[] probs = { 100 - loss, loss };
+
+            float cumulative = 0f;
+            int target = -1;
+            for (int i = 0; i < 2; i++)
+            {
+                cumulative += probs[i];
+                if (ran <= cumulative)
+                {
+                    target = 1 - i;
+                    break;
+                }
+            }
+            return target > 0 ? true : false;
+        }
+
+
+        /// <summary>Monst List 세팅 메소드</summary>
         public static void SetMonsterList()
         {
             monsterList.Clear();
@@ -155,30 +180,48 @@ namespace SpartaDungeonBattle
             string msg = "";
             if (monsterList[index].IsLive)
             {
-                // 데미지 계산
-                Random rand = new Random();
-                int atk = player.Atk + myAddStat[(int)Abilitys.공격력];
-                int error = (int)(atk * 0.1);
-                int damage = rand.Next(atk - error, atk + error);
+
                 Console.Clear();
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("Battle!!");
                 Console.ResetColor();
                 Console.WriteLine();
                 Console.WriteLine($"{player.Name} 의 공격!");
-                Console.WriteLine($"Lv.{monsterList[index].Level} {monsterList[index].Name} 을(를) 맞췄습니다. [데미지: {damage}]");
-                Console.WriteLine();
-                Console.WriteLine($"Lv.{monsterList[index].Level} {monsterList[index].Name}");
-                if (monsterList[index].Hp - damage > 0)
+                bool IsHit = Probability(10.0f);
+
+                if (IsHit) 
                 {
-                    Console.WriteLine($"HP {monsterList[index].Hp}->{monsterList[index].Hp - damage}");
-                    monsterList[index].Hp -= damage;
+                    bool IsCritical = Probability(85.0f);
+
+                    // 데미지 계산
+                    Random rand = new Random();
+                    int atk = player.Atk + myAddStat[(int)Abilitys.공격력];
+                    int error = (int)(atk * 0.1);
+                    int damage = rand.Next(atk - error, atk + error);
+
+                    if (IsCritical) damage = (int)(damage * 1.6f);
+
+                    Console.Write($"Lv.{monsterList[index].Level} {monsterList[index].Name} 을(를) 맞췄습니다. [데미지: {damage}]");
+                    if (IsCritical) Console.WriteLine(" - 치명타 공격!!");
+                    Console.WriteLine();
+                    Console.WriteLine($"Lv.{monsterList[index].Level} {monsterList[index].Name}");
+                    if (monsterList[index].Hp - damage > 0)
+                    {
+                        Console.WriteLine($"HP {monsterList[index].Hp}->{monsterList[index].Hp - damage}");
+                        monsterList[index].Hp -= damage;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"HP {monsterList[index].Hp}->Dead");
+                        monsterList[index].Hp = 0;
+                    }
                 }
                 else
                 {
-                    Console.WriteLine($"HP {monsterList[index].Hp}->Dead");
-                    monsterList[index].Hp = 0;
+                    Console.WriteLine($"Lv.{monsterList[index].Level} {monsterList[index].Name} 을(를) 공격했지만 아무일도 일어나지 않았습니다.");
+                    Console.WriteLine();
                 }
+
                 Console.WriteLine();
                 Console.WriteLine("0. 다음");
                 Console.WriteLine();
@@ -343,23 +386,36 @@ namespace SpartaDungeonBattle
                     //몬스터 사망 우유
                     if (monsterList[index].IsLive)
                     {
-                        // 데미지 계산
-                        Random rand = new Random();
-                        int atk = monsterList[index].Atk;
-                        int error = (int)(atk * 0.1);
-                        int damage = rand.Next(atk - error, atk + error);
 
+                        bool IsHit = Probability(10.0f);
                         Console.WriteLine($"Lv.{monsterList[index].Level} {monsterList[index].Name} 의 공격!");
-                        Console.WriteLine($"Lv.{player.Name} 을(를) 맞췄습니다. [데미지: {damage}]");
-                        if (player.Hp - damage > 0)
+                        if (IsHit)
                         {
-                            Console.WriteLine($"HP {player.Hp}->{player.Hp - damage}");
-                            player.Hp -= damage;
+                            bool IsCritical = Probability(85.0f);
+                            // 데미지 계산
+                            Random rand = new Random();
+                            int atk = monsterList[index].Atk;
+                            int error = (int)(atk * 0.1);
+                            int damage = rand.Next(atk - error, atk + error);
+
+                            if (IsCritical) damage = (int)(damage * 1.6f);
+
+                            Console.Write($"Lv.{player.Name} 을(를) 맞췄습니다. [데미지: {damage}]");
+                            if (IsCritical) Console.WriteLine(" - 치명타 공격!!");
+                            if (player.Hp - damage > 0)
+                            {
+                                Console.WriteLine($"HP {player.Hp}->{player.Hp - damage}");
+                                player.Hp -= damage;
+                            }
+                            else
+                            {
+                                Console.WriteLine($"HP {player.Hp}->0");
+                                player.Hp = 0;
+                            }
                         }
                         else
                         {
-                            Console.WriteLine($"HP {player.Hp}->0");
-                            player.Hp = 0;
+                            Console.WriteLine($"Lv.{player.Name} 을(를) 공격했지만 아무일도 일어나지 않았습니다.");
                         }
 
                         Console.WriteLine();
