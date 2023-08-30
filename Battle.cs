@@ -1,6 +1,7 @@
 ﻿using System;
 using static SpartaDungeonBattle.CharacterInfo;
 using static SpartaDungeonBattle.Common;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace SpartaDungeonBattle
 {
@@ -300,11 +301,10 @@ namespace SpartaDungeonBattle
         public static void DisplaySkillAttack(int index, string msg)
         {
             --index;
-            // 대상 선택 필요 여부
             Skill[] skills = SkillSet[(int)player.Job];
             if (skills[index].Count == 1)
             {
-
+                //단일 타격 스킬
                 int num = 1;
                 Console.Clear();
                 Console.ForegroundColor = ConsoleColor.Yellow;
@@ -352,6 +352,7 @@ namespace SpartaDungeonBattle
             }
             else
             {
+                //복수 타격 스킬
                 SkillAttack(index, -1);
             }
         }
@@ -360,58 +361,127 @@ namespace SpartaDungeonBattle
         private static void SkillAttack(int index, int input)
         {
             Skill[] skills = SkillSet[(int)player.Job];
-            if ( input > 0)
+
+            if (player.Mp > skills[index].Mp)
             {
-                input--;
-                if (monsterList[input].IsLive)
+                if (input > 0)
                 {
-                    //마나 소비
-                    player.Mp -= skills[index].Mp;
-                    
-                    // 데미지 계산
-                    Random rand = new Random();
-                    int atk = player.Atk + myAddStat[(int)Abilitys.공격력];
-                    int error = (int)(atk * 0.1);
-                    int damage = rand.Next(atk - error, atk + error);
-                    damage = (int)(damage * skills[index].Damage);
+                    input--;
+                    if (monsterList[input].IsLive)
+                    {
+                        
+                        // 데미지 계산
+                        Random rand = new Random();
+                        int atk = player.Atk + myAddStat[(int)Abilitys.공격력];
+                        int error = (int)(atk * 0.1);
+                        int damage = rand.Next(atk - error, atk + error);
+                        damage = (int)(damage * skills[index].Damage);
+                        Console.Clear();
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine("Battle!!");
+                        Console.ResetColor();
+                        Console.WriteLine();
+                        Console.WriteLine($"{player.Name} 의 {skills[index].Name}");
+                        Console.WriteLine($"Mp {player.Mp}->{player.Mp- skills[index].Mp}");
+                        // 마나 소비
+                        player.Mp -= skills[index].Mp;
+                        Console.WriteLine();
+                        Console.WriteLine($"Lv.{monsterList[input].Level} {monsterList[input].Name} 을(를) 맞췄습니다. [데미지: {damage}]");
+                        Console.WriteLine();
+                        Console.WriteLine($"Lv.{monsterList[input].Level} {monsterList[input].Name}");
+                        if (monsterList[input].Hp - damage > 0)
+                        {
+                            Console.WriteLine($"HP {monsterList[input].Hp}->{monsterList[input].Hp - damage}");
+                            monsterList[input].Hp -= damage;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"HP {monsterList[input].Hp}->Dead");
+                            monsterList[input].Hp = 0;
+                        }
+                        Console.WriteLine();
+                        Console.WriteLine("0. 다음");
+                        Console.WriteLine();
+                        int i = CheckValidInput(0, 0);
+                        switch (i)
+                        {
+                            case 0:
+                                Defend(0);
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        DisplayBattleAttack("잘못된 입력입니다.");
+                    }
+                }
+                else
+                {
+                    //반복 횟수
+                    int count = skills[index].Count;
+                    List<int> ilveMonster = new List<int>();
+
+                    for (int i = 0; i < monsterList.Count; i++)
+                    {
+                        if (monsterList[i].IsLive)
+                        {
+                            ilveMonster.Add(i);
+                        }
+                    }
+
+                    if (count > 1)
+                    {
+                        if(count < ilveMonster.Count)
+                        {
+                            ilveMonster = ilveMonster.Take(count).ToList();
+                        }
+                    }
                     Console.Clear();
                     Console.ForegroundColor = ConsoleColor.Yellow;
                     Console.WriteLine("Battle!!");
                     Console.ResetColor();
                     Console.WriteLine();
                     Console.WriteLine($"{player.Name} 의 {skills[index].Name}");
-                    Console.WriteLine($"Lv.{monsterList[input].Level} {monsterList[input].Name} 을(를) 맞췄습니다. [데미지: {damage}]");
-                    Console.WriteLine();
-                    Console.WriteLine($"Lv.{monsterList[input].Level} {monsterList[input].Name}");
-                    if (monsterList[input].Hp - damage > 0)
+                    Console.WriteLine($"Mp {player.Mp}->{player.Mp - skills[index].Mp}");
+                    // 마나 소비
+                    player.Mp -= skills[index].Mp;
+                    Random rand = new Random();
+                    int atk = player.Atk + myAddStat[(int)Abilitys.공격력];
+                    int error = (int)(atk * 0.1);
+                    int damage = (int)(atk * skills[index].Damage);
+                    foreach (int i in ilveMonster)
                     {
-                        Console.WriteLine($"HP {monsterList[input].Hp}->{monsterList[input].Hp - damage}");
-                        monsterList[input].Hp -= damage;
-                    }
-                    else
-                    {
-                        Console.WriteLine($"HP {monsterList[input].Hp}->Dead");
-                        monsterList[input].Hp = 0;
+                        Console.WriteLine();
+                        damage = rand.Next(damage - error, damage + error);
+                        Console.WriteLine($"Lv.{monsterList[i].Level} {monsterList[i].Name} 을(를) 맞췄습니다. [데미지: {damage}]");
+                        Console.WriteLine();
+                        Console.WriteLine($"Lv.{monsterList[i].Level} {monsterList[i].Name}");
+                        if (monsterList[i].Hp - damage > 0)
+                        {
+                            Console.WriteLine($"HP {monsterList[i].Hp}->{monsterList[i].Hp - damage}");
+                            monsterList[i].Hp -= damage;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"HP {monsterList[i].Hp}->Dead");
+                            monsterList[i].Hp = 0;
+                        }
                     }
                     Console.WriteLine();
                     Console.WriteLine("0. 다음");
                     Console.WriteLine();
-                    int i = CheckValidInput(0, 0);
-                    switch (i)
+                    int next = CheckValidInput(0, 0);
+                    switch (next)
                     {
                         case 0:
                             Defend(0);
                             break;
                     }
                 }
-                else
-                {
-                    DisplayBattleAttack("잘못된 입력입니다.");
-                }
             }
             else
             {
-
+                DisplayBattleAttack("MP가 부족합니다.");
             }
         }
 
