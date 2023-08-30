@@ -69,6 +69,7 @@ namespace SpartaDungeonBattle
             player.Mp = 50;
             player.Atk = 0;
             player.Def = 0;
+            player.Stage = 1;
             Console.Clear();
             Console.WriteLine("스파르타 던전에 오신 여러분 환영합니다.");
             Console.WriteLine("원하시는 직업을 선택해주세요.");

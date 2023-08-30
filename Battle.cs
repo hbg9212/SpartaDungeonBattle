@@ -47,32 +47,44 @@ namespace SpartaDungeonBattle
         }
 
         /// <summary>Monst List 세팅 메소드</summary>
-        public static void SetMonsterList()
+        public static void SetMonsterList(int stage)
         {
             monsterList.Clear();
 
             Random rand = new Random();
+
+            int level = stage / 10 > 1 ? stage / 10 : 1;
+
             // monsters에서 monster 랜덤 뽑기
-            for (int i = 0; i < rand.Next(1, 4); i++)
+            for (int i = 0; i < rand.Next(level, level+4); i++)
             {
-                int monsterNum = rand.Next(0, 3);
+                int monsterNum = 0;
+                // 10스테이지 이상 슈퍼미니언 생성
+                if (stage >= 10)
+                {
+                    monsterNum = rand.Next(0, 4);
+                }
+                else
+                {
+                    monsterNum = rand.Next(0, 3);
+                }
                 Monster monster;
                 switch (monsterNum)
                 {
                     case 0:
-                        monster = new Monster("미니언", 2, 15, 5);
+                        monster = new Monster("미니언", (2 + stage), (15 + (int)(stage * 1.5)), (5 + stage));
                         monsterList.Add(monster);
                         break;
                     case 1:
-                        monster = new Monster("대포미니언", 5, 25, 10);
+                        monster = new Monster("대포미니언", (5 + stage), (25 + (int)(stage * 1.5)), (10 + stage));
                         monsterList.Add(monster);
                         break;
                     case 2:
-                        monster = new Monster("공허충", 3, 10, 10);
+                        monster = new Monster("공허충", (3 + stage), (10 + (int)(stage * 1.5)), (10 + stage));
                         monsterList.Add(monster);
                         break;
                     case 3:
-                        monster = new Monster("슈펴미니언", 10, 30, 15);
+                        monster = new Monster("슈펴미니언", (10 + stage), (30 + (int)(stage * 1.5)), (15 + stage));
                         monsterList.Add(monster);
                         break;
                 }
@@ -385,7 +397,6 @@ namespace SpartaDungeonBattle
                         player.Mp -= skills[index].Mp;
                         Console.WriteLine();
                         Console.WriteLine($"Lv.{monsterList[input].Level} {monsterList[input].Name} 을(를) 맞췄습니다. [데미지: {damage}]");
-                        Console.WriteLine();
                         Console.WriteLine($"Lv.{monsterList[input].Level} {monsterList[input].Name}");
                         if (monsterList[input].Hp - damage > 0)
                         {
@@ -539,6 +550,10 @@ namespace SpartaDungeonBattle
 
                             if (IsCritical) damage = (int)(damage * 1.6f);
 
+                            int playerDef = (player.Def + myAddStat[(int)Abilitys.방어력]);
+
+                            damage = damage < playerDef ? 0 : damage - playerDef;
+
                             Console.Write($"Lv.{player.Name} 을(를) 맞췄습니다. [데미지: {damage}]");
                             if (IsCritical) Console.WriteLine(" - 치명타 공격!!");
                             if (player.Hp - damage > 0)
@@ -581,7 +596,7 @@ namespace SpartaDungeonBattle
                                 {
                                     addExp += monster.Level;
                                 }
-
+                                
                                 //승리
                                 Console.Clear();
                                 Console.ForegroundColor = ConsoleColor.Yellow;
@@ -591,6 +606,8 @@ namespace SpartaDungeonBattle
                                 Console.ResetColor();
                                 Console.WriteLine();
                                 Console.WriteLine($"던전에서 몬스터 {monsterList.Count}를 잡았습니다.");
+                                Console.WriteLine($"Stage {player.Stage} -> {++player.Stage}");
+
                                 Console.WriteLine();
                                 Console.WriteLine("[캐릭터 정보]");
                                 Console.Write($"Lv.{player.Level} {player.Name}");
@@ -609,17 +626,21 @@ namespace SpartaDungeonBattle
 
                                 Console.WriteLine($"MP {player.Mp}");
                                 Console.WriteLine($"exp {player.Exp} -> {player.Exp + addExp}");
-                                if (player.Exp + addExp >= maxExp[player.Level])
+                                if (player.Level < 5)
                                 {
-                                    // Level UP 당 공격력 0.5, 방어력 1;
-                                    int addAtk = player.Level % 2 == 0 ? 1 : 0;
-                                    int addDef = 1;
+                                    if (player.Exp + addExp >= maxExp[player.Level])
+                                    {
+                                        player.Level++;
+                                        // Level UP 당 공격력 0.5, 방어력 1;
+                                        int addAtk = (player.Level - 1) % 2 == 0 ? 1 : 0;
+                                        int addDef = 1;
 
-                                    Console.WriteLine($"공격력 {player.Atk} -> {player.Atk + addAtk}");
-                                    Console.WriteLine($"방어력 {player.Def} -> {player.Def + addDef}");
+                                        Console.WriteLine($"공격력 {player.Atk} -> {player.Atk + addAtk}");
+                                        Console.WriteLine($"방어력 {player.Def} -> {player.Def + addDef}");
 
-                                    player.Atk += addAtk;
-                                    player.Def += addDef;
+                                        player.Atk += addAtk;
+                                        player.Def += addDef;
+                                    }
                                 }
                                 player.Exp += addExp;
                                 Console.WriteLine();

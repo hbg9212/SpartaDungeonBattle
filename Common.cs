@@ -45,6 +45,7 @@ namespace SpartaDungeonBattle
             public int Exp { get; set; }
             public int HpPortion { get; set; }
             public int MpPortion { get; set; }
+            public int Stage { get; set; }
         }
 
         public class Item
@@ -111,7 +112,7 @@ namespace SpartaDungeonBattle
             Console.WriteLine("1. 상태보기");
             Console.WriteLine("2. 인벤토리");
             Console.WriteLine("3. 상점");
-            Console.WriteLine("4. 전투시작");
+            Console.WriteLine($"4. 전투시작 (현재 진행 : {player.Stage}층)");
             Console.WriteLine("5. 회복 아이템");
             Console.WriteLine();
             Console.WriteLine("0. 캐릭터 정보 변경");
@@ -135,7 +136,7 @@ namespace SpartaDungeonBattle
                     break;
                 case 4:
                     AddStat();
-                    SetMonsterList();
+                    SetMonsterList(player.Stage);
                     break;
                 case 5:
                     DisplayPortion("");
