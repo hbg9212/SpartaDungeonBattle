@@ -1,283 +1,288 @@
-﻿using static SpartaDungeonBattle.Common;
+﻿using System;
+using System.Buffers.Text;
+using System.Reflection.Emit;
+using Newtonsoft.Json;
+using static SpartaDungeonBattle.Common;
+using static SpartaDungeonBattle.Program;
 
 namespace SpartaDungeonBattle
 {
-    class Battle
+    internal class Battle
     {
-        // 몬스터 하드코딩
-        public class Monster
-        {
-            public string Name { get; set; }
-            public int Level { get; set; }
-            public int Hp { get; set; }
-            public int Atk { get; set; }
-            public bool IsLive => Hp > 0;
-            public Monster(string name, int level, int hp, int atk)
-            {
-                Name = name;
-                Level = level;
-                Hp = hp;
-                Atk = atk;
-            }
-        }
-
-        public static Monster[] monsters =
-        {
-            new Monster("미니언",2,15,5)
-            , new Monster("대포미니언",5,25,10)
-            , new Monster("공허충",3,10,10)
-        };
-
-        public static List<Monster> monsterList;
-
-
-        /// <summary>전투 시작 화면 출력</summary>
+        private static Random rand = new Random();
+        private static List<Monster> battleMonsters = new List<Monster>();
+        private static bool isAttack = false;
+        private static int requireExp = 10;
+        public static int MaxHP = 0;
+        public static int MaxMP = 0;
+        public static int baseHP = 0;
+        public static int baseMP = 0;
         public static void DisplayBattle()
         {
-
-            monsterList = new List<Monster>();
-            Random rand = new Random();
-            // monsters에서 monster 랜덤 뽑기
-            for (int i = 0; i < rand.Next(1, 4); i++)
-            {
-                monsterList.Add(monsters[rand.Next(0, 3)]);
-            }
-
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("Battle!!");
+            Console.WriteLine("Battle!");
             Console.ResetColor();
             Console.WriteLine();
-            foreach (Monster monster in monsterList)
-            {
-                if(monster.IsLive)
-                {
-                    Console.WriteLine($"Lv.{monster.Level} {monster.Name} HP {monster.Hp}");
-                }
-                else
-                {
-                    Console.WriteLine($"Lv.{monster.Level} {monster.Name} Dead");
-                }
-               
-            }
-
+            PrintMonsters(isAttack);
+            Console.WriteLine();
             Console.WriteLine();
             Console.WriteLine("[내정보]");
             Console.WriteLine($"Lv.{player.Level} {player.Name} ({player.Job})");
-            Console.WriteLine($"HP {player.Hp}/100");
+            Console.WriteLine($"HP {player.Hp}/{MaxHP}");
+            Console.WriteLine($"MP {player.Mp}/{MaxMP}");
             Console.WriteLine();
             Console.WriteLine("1. 공격");
+            Console.WriteLine("2. 스킬");
             Console.WriteLine();
             Console.WriteLine("원하시는 행동을 입력해주세요.");
 
-            int input = CheckValidInput(1, 1);
+            int input = CheckValidInput(1,1);
             switch (input)
             {
                 case 1:
-                    DisplayBattleAttack("");
+                    isAttack = true;
+                    DisplayBattlePhase();
                     break;
             }
         }
-
-        /// <summary>전투 공격 화면 출력</summary>
-        public static void DisplayBattleAttack(string msg)
+        static void DisplayBattlePhase()
         {
-            int num = 1;
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("Battle!!");
+            Console.WriteLine("Battle!");
             Console.ResetColor();
             Console.WriteLine();
-
-            foreach (Monster monster in monsterList)
-            {
-                if (monster.IsLive)
-                {
-                    Console.WriteLine($"{num++} Lv.{monster.Level} {monster.Name} HP {monster.Hp}");
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine($"{num++} Lv.{monster.Level} {monster.Name} Dead");
-                    Console.ResetColor();
-                }
-            }
-
+            PrintMonsters(isAttack);
+            Console.WriteLine();
             Console.WriteLine();
             Console.WriteLine("[내정보]");
             Console.WriteLine($"Lv.{player.Level} {player.Name} ({player.Job})");
-            Console.WriteLine($"HP {player.Hp}/100");
+            Console.WriteLine($"HP {player.Hp}/{MaxMP}");
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("0. 취소");
+            Console.WriteLine("0. 나가기");
             Console.ResetColor();
             Console.WriteLine();
-            Console.WriteLine("대상을 선택해주세요.");
-            Console.WriteLine(msg);
-            int input = CheckValidInput(0, monsterList.Count);
+            Console.WriteLine("원하시는 행동을 입력해주세요.");
+            int input = CheckValidInput(0, battleMonsters.Count);
             switch (input)
             {
                 case 0:
+                    isAttack = false;
                     DisplayBattle();
                     break;
                 default:
-                    Attack(input);
+                    DisplayPlayerPhase(input-1);
                     break;
+
             }
         }
+        static void DisplayPlayerPhase(int num)
+        { 
 
-        /// <summary>전투 공격</summary>
-        private static void Attack(int index)
-        {
-            index--;
-            string msg = "";
-            if (monsterList[index].IsLive)
+            Monster monster = battleMonsters[num];
+            int playerDamage = Damage();
+            if (monster.HP == 0)
             {
-                // 데미지 계산
-                Random rand = new Random();
-                int atk = player.Atk + myAddStat[(int)Abilitys.공격력];
-                int error = (int)(atk * 0.1);
-                int damage = rand.Next(atk - error, atk + error);
-                Console.Clear();
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("Battle!!");
-                Console.ResetColor();
-                Console.WriteLine();
-                Console.WriteLine($"{player.Name} 의 공격!");
-                Console.WriteLine($"Lv.{monsterList[index].Level} {monsterList[index].Name} 을(를) 맞췄습니다. [데미지: {damage}]");
-                Console.WriteLine();
-                Console.WriteLine($"Lv.{monsterList[index].Level} {monsterList[index].Name}");
-                if (monsterList[index].Hp - damage > 0)
-                {
-                    Console.WriteLine($"HP {monsterList[index].Hp}->{monsterList[index].Hp - damage}");
-                    monsterList[index].Hp -= damage;
-                }
-                else
-                {
-                    Console.WriteLine($"HP {monsterList[index].Hp}->Dead");
-                    monsterList[index].Hp = 0;
-                }
-                Console.WriteLine();
-                Console.WriteLine("0. 다음");
-                Console.WriteLine();
-                int input = CheckValidInput(0, 0);
-                switch (input)
-                {
-                    case 0:
-                        Defend(0);
-                        break;
-                }
-            }
-            else 
+                DisplayBattlePhase();
+                return;
+            };
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Battle!");
+            Console.ResetColor();
+            Console.WriteLine();
+            Console.WriteLine($"{player.Name} 의 공격!");
+            Console.WriteLine($"Lv.{monster.Level} {monster.Name} 을(를) 맞췄습니다. [데미지 : {playerDamage}]");
+            Console.WriteLine();
+            Console.WriteLine($"Lv.{monster.Level} {monster.Name}");
+            Console.Write($"HP {monster.HP} -> ");
+            if (monster.HP - playerDamage > 0)
             {
-                msg = "잘못된 입력입니다.";
-                DisplayBattleAttack(msg);
-            }
-        }
-
-        /// <summary>전투 방어</summary>
-        private static void Defend(int index)
-        {
-            //플레이어 사망 여부
-            if(player.Hp == 0)
-            {
-                //사망
-                Console.Clear();
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("Battle!! - Result");
-                Console.WriteLine();
-                Console.WriteLine("You Lose");
-                Console.ResetColor();
-                Console.WriteLine();
-                Console.WriteLine("0. 다음");
-                Console.WriteLine();
-                int input = CheckValidInput(0, 0);
-                switch (input)
-                {
-                    case 0:
-                        DisplayGameIntro();
-                        break;
-                }
+                monster.HP -= playerDamage;
+                Console.WriteLine(monster.HP);
             }
             else
             {
-                //몬스터 유무
-                if(index == monsterList.Count)
+                monster.HP = 0;
+                Console.WriteLine("Dead");
+            }
+            Console.WriteLine();
+            Console.WriteLine("0. 다음");
+            Console.WriteLine();
+            int input = CheckValidInput(0,0);
+            int sumHp = 0;
+            foreach (Monster M in battleMonsters)
+            {
+                sumHp += M.HP;
+            }
+            if (input == 0)
+            {
+                if (sumHp > 0)
                 {
-                    DisplayBattleAttack("");
+                    DisplayEnemyPhase(0);
                 }
-                else
+                else DisplayResult();
+            }
+        }
+        static void DisplayEnemyPhase(int num)
+        {
+            if (num < battleMonsters.Count)
+            {
+                Monster monster = battleMonsters[num];
+                int monsterDamage = rand.Next(monster.Level, monster.Level * 3);
+
+                if (monster.HP > 0)
                 {
                     Console.Clear();
                     Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine("Battle!!");
+                    Console.WriteLine("Battle!");
                     Console.ResetColor();
                     Console.WriteLine();
-                    //몬스터 사망 우유
-                    if (monsterList[index].IsLive)
+                    Console.WriteLine($"Lv.{monster.Level} {monster.Name} 의 공격!");
+                    Console.WriteLine($"{player.Name} 을(를) 맞췄습니다. [데미지 : {monsterDamage}]");
+                    Console.WriteLine();
+                    Console.WriteLine($"Lv.{player.Level} {player.Name}");
+                    Console.Write($"HP {player.Hp} -> ");
+                    if (player.Hp - monsterDamage > 0)
                     {
-                        // 데미지 계산
-                        Random rand = new Random();
-                        int atk = monsterList[index].Atk;
-                        int error = (int)(atk * 0.1);
-                        int damage = rand.Next(atk - error, atk + error);
-
-                        Console.WriteLine($"Lv.{monsterList[index].Level} {monsterList[index].Name} 의 공격!");
-                        Console.WriteLine($"Lv.{player.Name} 을(를) 맞췄습니다. [데미지: {damage}]");
-                        if (player.Hp - damage > 0)
-                        {
-                            Console.WriteLine($"HP {player.Hp}->{player.Hp - damage}");
-                            player.Hp -= damage;
-                        }
-                        else
-                        {
-                            Console.WriteLine($"HP {player.Hp}->0");
-                            player.Hp = 0;
-                        }
-
-                        Console.WriteLine();
-                        Console.WriteLine("0. 다음");
-                        Console.WriteLine();
-                        int input = CheckValidInput(0, 0);
-                        switch (input)
-                        {
-                            case 0:
-                                Defend(++index);
-                                break;
-                        }
+                        player.Hp -= monsterDamage;
+                        Console.WriteLine(player.Hp);
                     }
                     else
                     {
-                        index++;
-                        if (index == monsterList.Count)
-                        {
-                            //사망
-                            Console.Clear();
-                            Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.WriteLine("Battle!! - Result");
-                            Console.WriteLine();
-                            Console.WriteLine("Victory");
-                            Console.ResetColor();
-                            Console.WriteLine();
-                            Console.WriteLine($"던전에서 몬스터 {monsterList.Count}를 잡았습니다.");
-                            Console.WriteLine();
-                            Console.WriteLine("0. 다음");
-                            Console.WriteLine();
-                            int input = CheckValidInput(0, 0);
-                            switch (input)
-                            {
-                                case 0:
-                                    DisplayGameIntro();
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            Defend(index);
-                        }
+                        player.Hp = 0;
+                        DisplayResult();
+                    }
+                    Console.WriteLine();
+                    Console.WriteLine("0. 다음");
+                    Console.WriteLine();
+                    int input = CheckValidInput(0, 0);
+                    if (input == 0)
+                    {
+                        DisplayEnemyPhase(num + 1);
                     }
                 }
+                else DisplayEnemyPhase(num + 1);
             }
+            else DisplayBattlePhase();
+        }
+
+        static void DisplayResult() {
+            int baseExp = player.Exp;
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Battle!! - Result");
+            Console.ResetColor();
+            Console.WriteLine();
+            if (player.Hp == 0)
+            {
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                Console.WriteLine("You Lose");
+                Console.ResetColor();
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Victory");
+                Console.ResetColor();
+                Console.WriteLine();
+                Console.WriteLine($"던전에서 몬스터 {battleMonsters.Count}마리를 잡았습니다.");
+                dungeonClear();
+            }
+            Console.WriteLine();
+            Console.WriteLine("[캐릭터 정보]");
+            if (player.Exp < requireExp)
+            {
+                Console.WriteLine($"Lv.{player.Level} {player.Name}");
+            }
+            else
+            {
+                Console.Write($"Lv.{player.Level} {player.Name}");
+                LevelUp();
+                Console.WriteLine($"-> Lv.{player.Level} {player.Name}");
+            }
+            Console.WriteLine($"HP {baseHP} -> {player.Hp}");
+            Console.Write($"Exp {baseExp} -> {player.Exp}");
+            Console.WriteLine();
+            Console.WriteLine("0. 다음");
+            Console.WriteLine();
+            int input = CheckValidInput(0, 0);
+            if (input == 0)
+            {
+                if (player.Hp == 0)
+                {
+                    Environment.Exit(0);
+                }
+                else
+                {
+                    DisplayGameIntro();
+                }
+            }
+        }
+
+        public static void SpawnRandomMonsters()
+        {
+            int numberOfMonsters = rand.Next(1, player.DungeonFloor+2); // 1부터 (4 X 층수) 까지 랜덤한 수
+
+            for (int i = 0; i < numberOfMonsters; i++)
+            {
+                int randomIndex = rand.Next(monsters.Count);
+                Monster originalMonster = monsters[randomIndex];
+                Monster clonedMonster = new Monster(originalMonster); // 복사 생성자를 사용하여 복제
+                battleMonsters.Add(clonedMonster);
+            }
+        }
+        static void PrintMonsters(bool Attack)
+        {
+            for (int i = 0; i < battleMonsters.Count; i++)
+            {
+                Monster monster = battleMonsters[i];
+                string monsterNum = Attack ? $"{i + 1}. " : "";
+                if (monster.HP <= 0)
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine($"{monsterNum}{monster.Name}, Lv.{monster.Level} Dead");
+                    Console.ResetColor();
+                    continue;
+                }
+                Console.WriteLine($"{monsterNum}{monster.Name} Lv.{monster.Level} HP {monster.HP}");
+            }
+
+        }
+
+        static int Damage()
+        { 
+            double eAtk = player.Atk * 0.1;
+            int roundedeAtk = (int)Math.Ceiling(eAtk);
+            int finalDamage = rand.Next((int)player.Atk - roundedeAtk, (int)player.Atk + roundedeAtk + 1);
+
+            return finalDamage;
+        }
+        static void dungeonClear()
+        {
+            player.DungeonFloor++;
+            player.Mp += 10;
+            if(player.Mp > MaxMP) player.Mp = MaxMP;
+            foreach (Monster monster in battleMonsters)
+            {
+                player.Exp += monster.Level * 1;
+            }
+            battleMonsters.Clear();
+        }
+        static void LevelUp() //플레이어 레벨업
+        {
+            int increase = 0;
+            for(int i =0;i<=player.Level;i++)
+            {
+                increase += 5;
+            }
+            requireExp += increase;
+            player.Level++;
+            player.Hp = MaxHP;
+            player.Atk += 0.5;
+            player.Def += 1;
         }
     }
 }

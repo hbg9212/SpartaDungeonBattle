@@ -1,9 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Reflection;
-using static SpartaDungeonBattle.Inventory;
-using static SpartaDungeonBattle.Shop;
-using static SpartaDungeonBattle.MyInfo;
-using static SpartaDungeonBattle.Battle;
+using static SpartaDungeonBattle.Program;
 
 namespace SpartaDungeonBattle
 {
@@ -22,7 +19,9 @@ namespace SpartaDungeonBattle
         public static Character player;
         public static List<Item> myItem = new();
         public static List<Item> shop = new();
-        public static int[] maxExp = { 0, 10, 35, 65, 100 };
+        public static List<Monster> monsters = new();
+        public static Warrior warrior = new Warrior();
+        public static Mage mage = new Mage();
 
         //아이템 정렬관련 변수 선언
         public static int sort = 0;
@@ -33,11 +32,14 @@ namespace SpartaDungeonBattle
             public string Name { get; set; }
             public string Job { get; set; }
             public int Level { get; set; }
-            public int Atk { get; set; }
-            public int Def { get; set; }
+            public double Atk { get; set; }
+            public double Def { get; set; }
             public int Hp { get; set; }
+            public int Mp { get; set; }
             public int Gold { get; set; }
             public int Exp { get; set; }
+            public int DungeonFloor { get; set; }
+            public bool Initialized { get; set; }
         }
 
         public class Item
@@ -57,6 +59,64 @@ namespace SpartaDungeonBattle
             public Abilitys Ability { get; set; }
             public int Stat { get; set; }
         }
+
+        public class Monster
+        {
+            public string Name { get; set; }
+            public int Level { get; set; }
+            public int HP { get; set; }
+            
+            [JsonConstructor]
+            public Monster(string name, int level, int hp)
+            {
+                Name = name;
+                Level = level;
+                HP = hp;
+            }
+
+            // 복사 생성자
+            public Monster(Monster other)
+            {
+                Name = other.Name;
+                Level = other.Level;
+                HP = other.HP;
+            }
+        }
+
+        public class Job
+        {
+            public string JobName { get; set; }
+            public int BaseHp{ get; set; }
+            public int BaseMp { get; set; }
+            public int BaseAtk { get; set; }
+            public int BaseDef { get; set; }
+        }
+
+        public class Warrior : Job
+        {
+            public Warrior()
+            {
+                JobName = "전사";
+                BaseHp = 100;
+                BaseMp = 30;
+                BaseAtk = 10;
+                BaseDef = 5;
+            }
+
+        }
+
+        public class Mage : Job
+        {
+            public Mage()
+            {
+                JobName = "마법사";
+                BaseHp = 80;
+                BaseMp = 50;
+                BaseAtk = 15;
+                BaseDef = 3;
+            }
+        }
+
 
         /// <summary>초기 세팅</summary>
         public static void GameDataSetting(int set)
@@ -80,6 +140,10 @@ namespace SpartaDungeonBattle
             string jsonMyItem = File.ReadAllText($"{savePath}/myItemData.json");
             myItem = JsonConvert.DeserializeObject<List<Item>>(jsonMyItem);
 
+            // 몬스터 정보 세팅
+            string jsonMonster = File.ReadAllText($"{savePath}/monsterData.json");
+            monsters = JsonConvert.DeserializeObject<List<Monster>>(jsonMonster);
+
             // 아이템 장착 여부 검증
             foreach (Item item in myItem)
             {
@@ -89,42 +153,6 @@ namespace SpartaDungeonBattle
 
             //장비 추가 스텟 적용
             AddStat();
-
-            //게임 시작 화면
-            DisplayGameIntro();
-        }
-
-        /// <summary>게임 초기 화면 출력</summary>
-        public static void DisplayGameIntro()
-        {
-            Console.Clear();
-            Console.WriteLine("스파르타 마을에 오신 여러분 환영합니다.");
-            Console.WriteLine("이곳에서 전전으로 들어가기 전 활동을 할 수 있습니다.");
-            Console.WriteLine();
-            Console.WriteLine("1. 상태보기");
-            Console.WriteLine("2. 인벤토리");
-            Console.WriteLine("3. 상점");
-            Console.WriteLine("4. 전투시작");
-            Console.WriteLine();
-            Console.WriteLine("원하시는 행동을 입력해주세요.");
-
-            int input = CheckValidInput(1, 4);
-            switch (input)
-            {
-                case 1:
-                    DisplayMyInfo();
-                    break;
-                case 2:
-                    DisplayInventory();
-                    break;
-                case 3:
-                    DisplayShop();
-                    break;
-                case 4:
-                    AddStat();
-                    DisplayBattle();
-                    break;
-            }
         }
 
         /// <summary>착용한 장비의 스텟 계산 메소드</summary>
@@ -179,6 +207,21 @@ namespace SpartaDungeonBattle
 
                 }
                 Console.WriteLine("잘못된 입력입니다.");
+            }
+        }
+
+        public static string CheckValidNameInput()
+        {
+            while (true)
+            {
+                string input = Console.ReadLine();
+
+                if (!string.IsNullOrEmpty(input))
+                {
+                    return input;
+                }
+
+                Console.WriteLine("잘못된 입력입니다. 다시 입력해주세요.");
             }
         }
     }
