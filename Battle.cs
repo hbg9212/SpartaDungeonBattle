@@ -1,4 +1,5 @@
-﻿using static SpartaDungeonBattle.CharacterInfo;
+﻿using Newtonsoft.Json.Linq;
+using static SpartaDungeonBattle.CharacterInfo;
 using static SpartaDungeonBattle.Common;
 
 namespace SpartaDungeonBattle
@@ -440,7 +441,9 @@ namespace SpartaDungeonBattle
 
                     if (count > 1)
                     {
-                        if(count < ilveMonster.Count)
+                        Random r = new Random();
+                        ilveMonster = ilveMonster.OrderBy(i => r.Next()).ToList();
+                        if (count < ilveMonster.Count)
                         {
                             ilveMonster = ilveMonster.Take(count).ToList();
                         }
