@@ -1,11 +1,12 @@
-﻿using static SpartaDungeonBattle.CharacterInfo;
+﻿using System;
+using static SpartaDungeonBattle.CharacterInfo;
 using static SpartaDungeonBattle.Common;
 
 namespace SpartaDungeonBattle
 {
     class Battle
     {
-        // 몬스터 하드코딩
+
         public class Monster
         {
             public string Name { get; set; }
@@ -23,7 +24,6 @@ namespace SpartaDungeonBattle
         }
 
         public static List<Monster> monsterList = new List<Monster>();
-
 
         /// <summary>확률 계산 메소드</summary>
         public static bool Probability(float loss)
@@ -46,7 +46,6 @@ namespace SpartaDungeonBattle
             }
             return target > 0 ? true : false;
         }
-
 
         /// <summary>Monst List 세팅 메소드</summary>
         public static void SetMonsterList()
@@ -71,6 +70,10 @@ namespace SpartaDungeonBattle
                         break;
                     case 2:
                         monster = new Monster("공허충", 3, 10, 10);
+                        monsterList.Add(monster);
+                        break;
+                    case 3:
+                        monster = new Monster("슈펴미니언", 10, 30, 15);
                         monsterList.Add(monster);
                         break;
                 }
@@ -177,7 +180,6 @@ namespace SpartaDungeonBattle
         private static void Attack(int index)
         {
             index--;
-            string msg = "";
             if (monsterList[index].IsLive)
             {
 
@@ -235,8 +237,7 @@ namespace SpartaDungeonBattle
             }
             else 
             {
-                msg = "잘못된 입력입니다.";
-                DisplayBattleAttack(msg);
+                DisplayBattleAttack("잘못된 입력입니다.");
             }
         }
 
@@ -290,57 +291,127 @@ namespace SpartaDungeonBattle
                     DisplayBattle();
                     break;
                 default:
-                    SkillAttack(input);
+                    DisplaySkillAttack(input,"");
                     break;
             }
         }
 
-        /// <summary>전투 공격</summary>
-        private static void SkillAttack(int index)
+        /// <summary>전투 스킬 공격 화면 출력</summary>
+        public static void DisplaySkillAttack(int index, string msg)
         {
-            index--;
-            string msg = "";
-            if (monsterList[index].IsLive)
+            --index;
+            // 대상 선택 필요 여부
+            Skill[] skills = SkillSet[(int)player.Job];
+            if (skills[index].Count == 1)
             {
-                // 데미지 계산
-                Random rand = new Random();
-                int atk = player.Atk + myAddStat[(int)Abilitys.공격력];
-                int error = (int)(atk * 0.1);
-                int damage = rand.Next(atk - error, atk + error);
+
+                int num = 1;
                 Console.Clear();
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("Battle!!");
                 Console.ResetColor();
                 Console.WriteLine();
-                Console.WriteLine($"{player.Name} 의 공격!");
-                Console.WriteLine($"Lv.{monsterList[index].Level} {monsterList[index].Name} 을(를) 맞췄습니다. [데미지: {damage}]");
+                Console.WriteLine("[대상 선택]");
                 Console.WriteLine();
-                Console.WriteLine($"Lv.{monsterList[index].Level} {monsterList[index].Name}");
-                if (monsterList[index].Hp - damage > 0)
+                foreach (Monster monster in monsterList)
                 {
-                    Console.WriteLine($"HP {monsterList[index].Hp}->{monsterList[index].Hp - damage}");
-                    monsterList[index].Hp -= damage;
+                    if (monster.IsLive)
+                    {
+                        Console.WriteLine($"{num++} Lv.{monster.Level} {monster.Name} HP {monster.Hp}");
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+                        Console.WriteLine($"{num++} Lv.{monster.Level} {monster.Name} Dead");
+                        Console.ResetColor();
+                    }
                 }
-                else
-                {
-                    Console.WriteLine($"HP {monsterList[index].Hp}->Dead");
-                    monsterList[index].Hp = 0;
-                }
+
                 Console.WriteLine();
-                Console.WriteLine("0. 다음");
+                Console.WriteLine("[내정보]");
+                Console.WriteLine($"Lv.{player.Level} {player.Name} ({player.Job})");
+                Console.WriteLine($"HP {player.Hp}/100");
+                Console.WriteLine($"MP {player.Mp}/50");
                 Console.WriteLine();
-                int input = CheckValidInput(0, 0);
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("0. 취소");
+                Console.ResetColor();
+                Console.WriteLine();
+                Console.WriteLine("대상을 선택해주세요.");
+                Console.WriteLine(msg);
+                int input = CheckValidInput(0, monsterList.Count);
                 switch (input)
                 {
                     case 0:
-                        Defend(0);
+                        DisplayBattle();
+                        break;
+                    default:
+                        SkillAttack(index, input);
                         break;
                 }
             }
             else
             {
-                msg = "잘못된 입력입니다.";
-                DisplayBattleAttack(msg);
+                SkillAttack(index, -1);
+            }
+        }
+
+        /// <summary>스킬 공격</summary>
+        private static void SkillAttack(int index, int input)
+        {
+            Skill[] skills = SkillSet[(int)player.Job];
+            if ( input > 0)
+            {
+                input--;
+                if (monsterList[input].IsLive)
+                {
+                    //마나 소비
+                    player.Mp -= skills[index].Mp;
+                    
+                    // 데미지 계산
+                    Random rand = new Random();
+                    int atk = player.Atk + myAddStat[(int)Abilitys.공격력];
+                    int error = (int)(atk * 0.1);
+                    int damage = rand.Next(atk - error, atk + error);
+                    damage = (int)(damage * skills[index].Damage);
+                    Console.Clear();
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("Battle!!");
+                    Console.ResetColor();
+                    Console.WriteLine();
+                    Console.WriteLine($"{player.Name} 의 {skills[index].Name}");
+                    Console.WriteLine($"Lv.{monsterList[input].Level} {monsterList[input].Name} 을(를) 맞췄습니다. [데미지: {damage}]");
+                    Console.WriteLine();
+                    Console.WriteLine($"Lv.{monsterList[input].Level} {monsterList[input].Name}");
+                    if (monsterList[input].Hp - damage > 0)
+                    {
+                        Console.WriteLine($"HP {monsterList[input].Hp}->{monsterList[input].Hp - damage}");
+                        monsterList[input].Hp -= damage;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"HP {monsterList[input].Hp}->Dead");
+                        monsterList[input].Hp = 0;
+                    }
+                    Console.WriteLine();
+                    Console.WriteLine("0. 다음");
+                    Console.WriteLine();
+                    int i = CheckValidInput(0, 0);
+                    switch (i)
+                    {
+                        case 0:
+                            Defend(0);
+                            break;
+                    }
+                }
+                else
+                {
+                    DisplayBattleAttack("잘못된 입력입니다.");
+                }
+            }
+            else
+            {
+
             }
         }
 
@@ -448,6 +519,10 @@ namespace SpartaDungeonBattle
                                 Console.WriteLine();
                                 Console.WriteLine("0. 다음");
                                 Console.WriteLine();
+
+                                player.Mp += 10;
+                                if (player.Mp > 50) player.Mp = 50;
+
                                 int input = CheckValidInput(0, 0);
                                 switch (input)
                                 {
