@@ -1,4 +1,5 @@
-﻿using static SpartaDungeonBattle.Common;
+﻿using static SpartaDungeonBattle.CharacterInfo;
+using static SpartaDungeonBattle.Common;
 
 namespace SpartaDungeonBattle
 {
@@ -21,28 +22,41 @@ namespace SpartaDungeonBattle
             }
         }
 
-        public static Monster[] monsters =
+        public static List<Monster> monsterList = new List<Monster>();
+
+        public static void SetMonsterList()
         {
-            new Monster("미니언",2,15,5)
-            , new Monster("대포미니언",5,25,10)
-            , new Monster("공허충",3,10,10)
-        };
+            monsterList.Clear();
 
-        public static List<Monster> monsterList;
-
-
-        /// <summary>전투 시작 화면 출력</summary>
-        public static void DisplayBattle()
-        {
-
-            monsterList = new List<Monster>();
             Random rand = new Random();
             // monsters에서 monster 랜덤 뽑기
             for (int i = 0; i < rand.Next(1, 4); i++)
             {
-                monsterList.Add(monsters[rand.Next(0, 3)]);
+                int monsterNum = rand.Next(0, 3);
+                Monster monster;
+                switch (monsterNum)
+                {
+                    case 0:
+                        monster = new Monster("미니언", 2, 15, 5);
+                        monsterList.Add(monster);
+                        break;
+                    case 1:
+                        monster = new Monster("대포미니언", 5, 25, 10);
+                        monsterList.Add(monster);
+                        break;
+                    case 2:
+                        monster = new Monster("공허충", 3, 10, 10);
+                        monsterList.Add(monster);
+                        break;
+                }
             }
 
+            DisplayBattle();
+        }
+
+        /// <summary>전투 시작 화면 출력</summary>
+        public static void DisplayBattle()
+        {
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("Battle!!");
@@ -56,7 +70,9 @@ namespace SpartaDungeonBattle
                 }
                 else
                 {
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
                     Console.WriteLine($"Lv.{monster.Level} {monster.Name} Dead");
+                    Console.ResetColor();
                 }
                
             }
@@ -65,16 +81,21 @@ namespace SpartaDungeonBattle
             Console.WriteLine("[내정보]");
             Console.WriteLine($"Lv.{player.Level} {player.Name} ({player.Job})");
             Console.WriteLine($"HP {player.Hp}/100");
+            Console.WriteLine($"MP {player.Mp}/50");
             Console.WriteLine();
             Console.WriteLine("1. 공격");
+            Console.WriteLine("2. 스킬");
             Console.WriteLine();
             Console.WriteLine("원하시는 행동을 입력해주세요.");
 
-            int input = CheckValidInput(1, 1);
+            int input = CheckValidInput(1, 2);
             switch (input)
             {
                 case 1:
                     DisplayBattleAttack("");
+                    break;
+                case 2:
+                    DisplaySkill(); 
                     break;
             }
         }
@@ -107,6 +128,7 @@ namespace SpartaDungeonBattle
             Console.WriteLine("[내정보]");
             Console.WriteLine($"Lv.{player.Level} {player.Name} ({player.Job})");
             Console.WriteLine($"HP {player.Hp}/100");
+            Console.WriteLine($"MP {player.Mp}/50");
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("0. 취소");
@@ -175,6 +197,111 @@ namespace SpartaDungeonBattle
             }
         }
 
+        /// <summary>전투 스킬 화면 출력</summary>
+        public static void DisplaySkill()
+        {
+
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Battle!!");
+            Console.ResetColor();
+            Console.WriteLine();
+
+            foreach (Monster monster in monsterList)
+            {
+                if (monster.IsLive)
+                {
+                    Console.WriteLine($"Lv.{monster.Level} {monster.Name} HP {monster.Hp}");
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine($"Lv.{monster.Level} {monster.Name} Dead");
+                    Console.ResetColor();
+                }
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("[내정보]");
+            Console.WriteLine($"Lv.{player.Level} {player.Name} ({player.Job})");
+            Console.WriteLine($"HP {player.Hp}/100");
+            Console.WriteLine($"MP {player.Mp}/50");
+            Console.WriteLine();
+            Skill[] skills = SkillSet[(int)player.Job];
+            for (int i = 0; i < skills.Length; i++)
+            {
+                Console.WriteLine($"{i+1}. {skills[i].Name} - MP {skills[i].Mp}");
+                Console.WriteLine($"   {skills[i].Described}");
+            }
+
+            Console.WriteLine();
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("0. 취소");
+            Console.ResetColor();
+            Console.WriteLine();
+            Console.WriteLine("대상을 선택해주세요.");
+            int input = CheckValidInput(0, skills.Length);
+            switch (input)
+            {
+                case 0:
+                    DisplayBattle();
+                    break;
+                default:
+                    SkillAttack(input);
+                    break;
+            }
+        }
+
+        /// <summary>전투 공격</summary>
+        private static void SkillAttack(int index)
+        {
+            index--;
+            string msg = "";
+            if (monsterList[index].IsLive)
+            {
+                // 데미지 계산
+                Random rand = new Random();
+                int atk = player.Atk + myAddStat[(int)Abilitys.공격력];
+                int error = (int)(atk * 0.1);
+                int damage = rand.Next(atk - error, atk + error);
+                Console.Clear();
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Battle!!");
+                Console.ResetColor();
+                Console.WriteLine();
+                Console.WriteLine($"{player.Name} 의 공격!");
+                Console.WriteLine($"Lv.{monsterList[index].Level} {monsterList[index].Name} 을(를) 맞췄습니다. [데미지: {damage}]");
+                Console.WriteLine();
+                Console.WriteLine($"Lv.{monsterList[index].Level} {monsterList[index].Name}");
+                if (monsterList[index].Hp - damage > 0)
+                {
+                    Console.WriteLine($"HP {monsterList[index].Hp}->{monsterList[index].Hp - damage}");
+                    monsterList[index].Hp -= damage;
+                }
+                else
+                {
+                    Console.WriteLine($"HP {monsterList[index].Hp}->Dead");
+                    monsterList[index].Hp = 0;
+                }
+                Console.WriteLine();
+                Console.WriteLine("0. 다음");
+                Console.WriteLine();
+                int input = CheckValidInput(0, 0);
+                switch (input)
+                {
+                    case 0:
+                        Defend(0);
+                        break;
+                }
+            }
+            else
+            {
+                msg = "잘못된 입력입니다.";
+                DisplayBattleAttack(msg);
+            }
+        }
+
+
         /// <summary>전투 방어</summary>
         private static void Defend(int index)
         {
@@ -204,7 +331,7 @@ namespace SpartaDungeonBattle
                 //몬스터 유무
                 if(index == monsterList.Count)
                 {
-                    DisplayBattleAttack("");
+                    DisplayBattle();
                 }
                 else
                 {
@@ -251,25 +378,33 @@ namespace SpartaDungeonBattle
                         index++;
                         if (index == monsterList.Count)
                         {
-                            //사망
-                            Console.Clear();
-                            Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.WriteLine("Battle!! - Result");
-                            Console.WriteLine();
-                            Console.WriteLine("Victory");
-                            Console.ResetColor();
-                            Console.WriteLine();
-                            Console.WriteLine($"던전에서 몬스터 {monsterList.Count}를 잡았습니다.");
-                            Console.WriteLine();
-                            Console.WriteLine("0. 다음");
-                            Console.WriteLine();
-                            int input = CheckValidInput(0, 0);
-                            switch (input)
+                            if (monsterList.FindLastIndex(i => i.IsLive == true) == -1) 
                             {
-                                case 0:
-                                    DisplayGameIntro();
-                                    break;
+                                //승리
+                                Console.Clear();
+                                Console.ForegroundColor = ConsoleColor.Yellow;
+                                Console.WriteLine("Battle!! - Result");
+                                Console.WriteLine();
+                                Console.WriteLine("Victory");
+                                Console.ResetColor();
+                                Console.WriteLine();
+                                Console.WriteLine($"던전에서 몬스터 {monsterList.Count}를 잡았습니다.");
+                                Console.WriteLine();
+                                Console.WriteLine("0. 다음");
+                                Console.WriteLine();
+                                int input = CheckValidInput(0, 0);
+                                switch (input)
+                                {
+                                    case 0:
+                                        DisplayGameIntro();
+                                        break;
+                                }
                             }
+                            else
+                            {
+                                DisplayBattle();
+                            }
+
                         }
                         else
                         {

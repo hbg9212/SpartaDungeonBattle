@@ -132,7 +132,7 @@ namespace SpartaDungeonBattle
                     break;
                 case 4:
                     AddStat();
-                    DisplayBattle();
+                    SetMonsterList();
                     break;
             }
         }
