@@ -13,8 +13,6 @@ namespace SpartaDungeonBattle
         private static List<Monster> battleMonsters = new List<Monster>();
         private static bool isAttack = false;
         private static int requireExp = 10;
-        public static int MaxHP = 0;
-        public static int MaxMP = 0;
         public static int baseHP = 0;
         public static int baseMP = 0;
         public static void DisplayBattle()
@@ -29,15 +27,15 @@ namespace SpartaDungeonBattle
             Console.WriteLine();
             Console.WriteLine("[내정보]");
             Console.WriteLine($"Lv.{player.Level} {player.Name} ({player.Job})");
-            Console.WriteLine($"HP {player.Hp}/{MaxHP}");
-            Console.WriteLine($"MP {player.Mp}/{MaxMP}");
+            Console.WriteLine($"HP {player.Hp}/{player.MaxHP}");
+            Console.WriteLine($"MP {player.Mp}/{player.MaxMP}");
             Console.WriteLine();
             Console.WriteLine("1. 공격");
             Console.WriteLine("2. 스킬");
             Console.WriteLine();
             Console.WriteLine("원하시는 행동을 입력해주세요.");
 
-            int input = CheckValidInput(1,1);
+            int input = CheckValidInput(1,2);
             switch (input)
             {
                 case 1:
@@ -58,7 +56,8 @@ namespace SpartaDungeonBattle
             Console.WriteLine();
             Console.WriteLine("[내정보]");
             Console.WriteLine($"Lv.{player.Level} {player.Name} ({player.Job})");
-            Console.WriteLine($"HP {player.Hp}/{MaxMP}");
+            Console.WriteLine($"HP {player.Hp}/{player.MaxHP}");
+            Console.WriteLine($"MP {player.Mp}/{player.MaxMP}");
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("0. 나가기");
@@ -83,6 +82,8 @@ namespace SpartaDungeonBattle
 
             Monster monster = battleMonsters[num];
             int playerDamage = Damage();
+            int critical = rand.Next(0, 101);
+            string cri = "";
             if (monster.HP == 0)
             {
                 DisplayBattlePhase();
@@ -94,7 +95,13 @@ namespace SpartaDungeonBattle
             Console.ResetColor();
             Console.WriteLine();
             Console.WriteLine($"{player.Name} 의 공격!");
-            Console.WriteLine($"Lv.{monster.Level} {monster.Name} 을(를) 맞췄습니다. [데미지 : {playerDamage}]");
+            if (critical <= 15)
+            {
+                playerDamage = (int)(playerDamage * 1.6);
+                cri = " - 치명타 공격!!";
+            }
+            else cri = "";
+            Console.WriteLine($"Lv.{monster.Level} {monster.Name} 을(를) 맞췄습니다. [데미지 : {playerDamage}]{cri}");
             Console.WriteLine();
             Console.WriteLine($"Lv.{monster.Level} {monster.Name}");
             Console.Write($"HP {monster.HP} -> ");
@@ -264,7 +271,7 @@ namespace SpartaDungeonBattle
         {
             player.DungeonFloor++;
             player.Mp += 10;
-            if(player.Mp > MaxMP) player.Mp = MaxMP;
+            if(player.Mp > player.MaxMP) player.Mp = player.MaxMP;
             foreach (Monster monster in battleMonsters)
             {
                 player.Exp += monster.Level * 1;
@@ -280,7 +287,10 @@ namespace SpartaDungeonBattle
             }
             requireExp += increase;
             player.Level++;
-            player.Hp = MaxHP;
+            player.MaxHP += 5;
+            player.MaxMP += 5;
+            player.Hp = player.MaxHP;
+            player.Mp = player.MaxMP;
             player.Atk += 0.5;
             player.Def += 1;
         }

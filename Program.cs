@@ -18,14 +18,7 @@ namespace SpartaDungeonBattle
         /// <summary>게임 초기 화면 출력</summary>
         public static void DisplayName()
         {
-            player.Level = 1;
-            player.Exp = 0;
-            player.Hp = 100;
-            player.Mp = 50;
-            player.Atk = 0;
-            player.Def = 0;
-            player.Gold = 1000;
-            player.DungeonFloor = 1;
+            player.InitializePlayer(); 
             Console.Clear();
             Console.WriteLine("스파르타 던전에 오신 여러분 환영합니다.");
             Console.WriteLine("원하시는 이름을 설정해주세요.");
@@ -57,34 +50,19 @@ namespace SpartaDungeonBattle
             Console.WriteLine("1. 전사");
             Console.WriteLine("2. 마법사");
             int num = CheckValidInput(1, 2);
-            switch (num)
-            {
-                case 1:
-                    player.Job = warrior.JobName;
-                    player.Hp = warrior.BaseHp;
-                    MaxHP = warrior.BaseHp;
-                    player.Mp = warrior.BaseMp;
-                    MaxMP = warrior.BaseMp;
-                    player.Atk = warrior.BaseAtk;
-                    player.Def = warrior.BaseDef;
-                    break;
-                case 2:
-                    player.Job = mage.JobName;
-                    player.Hp = mage.BaseHp;
-                    MaxHP = mage.BaseHp;
-                    MaxMP = mage.BaseMp;
-                    player.Mp = mage.BaseMp;
-                    player.Atk = mage.BaseAtk;
-                    player.Def = mage.BaseDef;
-                    break;
-            }
+            Job selectedJob = jobs[num-1]; // 선택한 직업에 해당하는 객체 가져오기
+            player.Job = selectedJob.JobName;
+            player.Hp = player.MaxHP = selectedJob.BaseHp;
+            player.Mp = player.MaxMP = selectedJob.BaseMp;
+            player.Atk = selectedJob.BaseAtk;
+            player.Def = selectedJob.BaseDef;
+            player.Initialized = true;
             Console.Clear() ;
             Console.WriteLine($"{player.Job} (으)로 전직하였습니다.");
             Console.WriteLine("0. 다음");
             int input = CheckValidInput(0, 0);
             if(input == 0)
             {
-                player.Initialized = true;
                 DisplayGameIntro();
             }
         }
@@ -92,6 +70,7 @@ namespace SpartaDungeonBattle
         {
             Console.Clear();
             Console.WriteLine("스파르타 마을에 오신 여러분 환영합니다.");
+            Console.WriteLine(player.MaxMP);
             Console.WriteLine("이곳에서 전전으로 들어가기 전 활동을 할 수 있습니다.");
             Console.WriteLine();
             Console.WriteLine("1. 상태보기");

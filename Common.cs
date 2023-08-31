@@ -20,8 +20,11 @@ namespace SpartaDungeonBattle
         public static List<Item> myItem = new();
         public static List<Item> shop = new();
         public static List<Monster> monsters = new();
-        public static Warrior warrior = new Warrior();
-        public static Mage mage = new Mage();
+        public static Job[] jobs = new Job[]
+        {
+            new Warrior(),
+            new Mage()
+        };
 
         //아이템 정렬관련 변수 선언
         public static int sort = 0;
@@ -35,11 +38,26 @@ namespace SpartaDungeonBattle
             public double Atk { get; set; }
             public double Def { get; set; }
             public int Hp { get; set; }
+            public int MaxHP { get; set; }
             public int Mp { get; set; }
+            public int MaxMP { get; set; }
             public int Gold { get; set; }
             public int Exp { get; set; }
             public int DungeonFloor { get; set; }
             public bool Initialized { get; set; }
+
+
+            public void InitializePlayer()
+            {
+                Level = 1;
+                Exp = 0;
+                Hp = 100;
+                Mp = 50;
+                Atk = 0;
+                Def = 0;
+                Gold = 1000;
+                DungeonFloor = 1;
+            }
         }
 
         public class Item
