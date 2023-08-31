@@ -4,6 +4,8 @@ using static SpartaDungeonBattle.Inventory;
 using static SpartaDungeonBattle.Shop;
 using static SpartaDungeonBattle.MyInfo;
 using static SpartaDungeonBattle.Battle;
+using static SpartaDungeonBattle.CharacterInfo;
+using static SpartaDungeonBattle.Portion;
 
 namespace SpartaDungeonBattle
 {
@@ -28,16 +30,22 @@ namespace SpartaDungeonBattle
         public static int sort = 0;
         public static bool order = true;
 
+        //케릭터 관련 클레스
+        public enum CharacterJob { 전사, 도적 };
         public class Character
         {
             public string Name { get; set; }
-            public string Job { get; set; }
+            public CharacterJob Job { get; set; }
             public int Level { get; set; }
             public int Atk { get; set; }
             public int Def { get; set; }
             public int Hp { get; set; }
+            public int Mp { get; set; }
             public int Gold { get; set; }
             public int Exp { get; set; }
+            public int HpPortion { get; set; }
+            public int MpPortion { get; set; }
+            public int Stage { get; set; }
         }
 
         public class Item
@@ -104,13 +112,19 @@ namespace SpartaDungeonBattle
             Console.WriteLine("1. 상태보기");
             Console.WriteLine("2. 인벤토리");
             Console.WriteLine("3. 상점");
-            Console.WriteLine("4. 전투시작");
+            Console.WriteLine($"4. 전투시작 (현재 진행 : {player.Stage}층)");
+            Console.WriteLine("5. 회복 아이템");
+            Console.WriteLine();
+            Console.WriteLine("0. 캐릭터 정보 변경");
             Console.WriteLine();
             Console.WriteLine("원하시는 행동을 입력해주세요.");
 
-            int input = CheckValidInput(1, 4);
+            int input = CheckValidInput(0, 5);
             switch (input)
             {
+                case 0:
+                    DisplayName();
+                    break;
                 case 1:
                     DisplayMyInfo();
                     break;
@@ -122,7 +136,10 @@ namespace SpartaDungeonBattle
                     break;
                 case 4:
                     AddStat();
-                    DisplayBattle();
+                    SetMonsterList(player.Stage);
+                    break;
+                case 5:
+                    DisplayPortion("");
                     break;
             }
         }
