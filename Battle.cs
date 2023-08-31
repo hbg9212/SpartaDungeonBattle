@@ -11,7 +11,6 @@ namespace SpartaDungeonBattle
 {
     internal class Battle
     {
-        private static Random rand = new Random();
         private static List<Monster> battleMonsters = new List<Monster>();
         private static bool isAttack = false;
         private static int requireExp = 10;
@@ -106,6 +105,7 @@ namespace SpartaDungeonBattle
                 Skill skill = player.Skills[i];
                 Console.WriteLine($"{index}. {skill.Name} - MP {skill.MPCost}");
                 Console.WriteLine($" {skill.Description}");
+                index++;
             }
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("0. 취소");
@@ -119,8 +119,21 @@ namespace SpartaDungeonBattle
                     DisplayBattle();
                     break;
                 default:
-                    isAttack = true;
-                    DisplayPlayerSkillPhase(input);
+                    if (player.Mp - player.Skills[input].MPCost >= 0)
+                    {
+                        if (player.Skills[input].isMunti) DisplayPlayerPhase(input, input);
+                        else
+                        {
+                            isAttack = true;
+                            DisplayPlayerSkillPhase(input);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("MP가 부족합니다!");
+                        Thread.Sleep(1000);
+                        DisplaySkillPhase();
+                    }
                     break;
 
             }
@@ -146,45 +159,26 @@ namespace SpartaDungeonBattle
         }
         static void DisplayPlayerPhase(int num, int skillnum)
         {
-            Monster monster = battleMonsters[num];
-            int playerDamage = player.Skills[skillnum].SingleAction(player);
-            int critical = rand.Next(0, 101);
-            string cri = "";
-            if (skillnum == 0)
-            {
-                if (critical <= 15)
-                {
-                    playerDamage = (int)(playerDamage * 1.6);
-                    cri = " - 치명타 공격!!";
-                }
-                else cri = "";
-            }
-            if (monster.HP == 0)
-            {
-                DisplayBattlePhase();
-                return;
-            };
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("Battle!");
             Console.ResetColor();
             Console.WriteLine();
             Console.WriteLine($"{player.Name} 의 공격!");
-            Console.WriteLine($"Lv.{monster.Level} {monster.Name} 을(를) 맞췄습니다. [데미지 : {playerDamage}]{cri}");
-            Console.WriteLine();
-            Console.WriteLine($"Lv.{monster.Level} {monster.Name}");
-            Console.Write($"HP {monster.HP} -> ");
-            if (monster.HP - playerDamage > 0)
+            if (player.Skills[skillnum].isMunti)
             {
-                monster.HP -= playerDamage;
-                Console.WriteLine(monster.HP);
+                player.Skills[skillnum].MultipleAction(player, battleMonsters);
             }
             else
             {
-                monster.HP = 0;
-                Console.WriteLine("Dead");
+                Monster monster = battleMonsters[num];
+                if (monster.HP == 0)
+                {
+                    DisplayBattlePhase();
+                    return;
+                };
+                player.Skills[skillnum].SingleAction(player, monster);
             }
-
             Console.WriteLine();
             Console.WriteLine("0. 다음");
             Console.WriteLine();
@@ -205,6 +199,8 @@ namespace SpartaDungeonBattle
         }
         static void DisplayPlayerSkillPhase(int num)
         {
+         
+            Skill skill= player.Skills[num];         
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("Battle!");
@@ -218,7 +214,6 @@ namespace SpartaDungeonBattle
             Console.WriteLine($"HP {player.Hp}/{player.MaxHP}");
             Console.WriteLine($"MP {player.Mp}/{player.MaxMP}");
             Console.WriteLine();
-            Skill skill= player.Skills[num];
             Console.WriteLine($"현재 스킬 : {skill.Name} - MP {skill.MPCost}");
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("0. 취소");
@@ -278,7 +273,11 @@ namespace SpartaDungeonBattle
                 }
                 else DisplayEnemyPhase(num + 1);
             }
-            else DisplayBattlePhase();
+            else
+            {
+                isAttack = false;
+                DisplayBattle();
+            }
         }
 
         static void DisplayResult() {

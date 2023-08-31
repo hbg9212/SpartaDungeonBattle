@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Reflection;
+using System.Linq;
+using static SpartaDungeonBattle.Common;
 using static SpartaDungeonBattle.Program;
 
 namespace SpartaDungeonBattle
@@ -30,6 +32,8 @@ namespace SpartaDungeonBattle
         //아이템 정렬관련 변수 선언
         public static int sort = 0;
         public static bool order = true;
+
+        public static Random rand =new Random();
 
         public class Character
         {
@@ -77,10 +81,9 @@ namespace SpartaDungeonBattle
             public string Name { get; set; }
             public int MPCost { get; set; }
             public string Description { get; set; }
-            public Func<Character, int> SingleAction { get; set; }
-            public Func<Character, int> MultipleAction { get; set; }
-
-            public int amage { get; set; }
+            public bool isMunti { get; set; }
+            public Action<Character,Monster> SingleAction { get; set; }
+            public Action<Character, List<Monster>> MultipleAction { get; set; }
         }
         public class Item
         {
@@ -139,11 +142,35 @@ namespace SpartaDungeonBattle
                 {
                     Name = "기본 공격",
                     MPCost = 0,
+                    isMunti = false,
                     Description = "기본 공격을 수행합니다.",
-                    SingleAction = (player) =>
+                    SingleAction = (player, monster) =>
                     {
-                        int damage = player.Damage();
-                        return damage;
+                        int playerDamage = player.Damage();
+                        int critical = rand.Next(0, 101);
+                        string cri = "";
+                        if (critical <= 15)
+                            {
+                                playerDamage = (int)(playerDamage * 1.6);
+                                cri = " - 치명타 공격!!";
+                            }
+                            else cri = "";
+                        
+                        Console.WriteLine($"Lv.{monster.Level} {monster.Name} 을(를) 맞췄습니다. [데미지 : {playerDamage}]{cri}");
+                        Console.WriteLine();
+                        Console.WriteLine($"Lv.{monster.Level} {monster.Name}");
+                        Console.Write($"HP {monster.HP} -> ");
+                        player.Mp -= player.Skills[0].MPCost;
+                        if (monster.HP - playerDamage > 0)
+                        {
+                            monster.HP -= playerDamage;
+                            Console.WriteLine(monster.HP);
+                        }
+                        else
+                        {
+                            monster.HP = 0;
+                            Console.WriteLine("Dead");
+                        }                       
                     }
                 }); 
             }
@@ -165,11 +192,58 @@ namespace SpartaDungeonBattle
                 {
                     Name = "알파 스트라이크",
                     MPCost = 10,
+                    isMunti = false,
                     Description = "공격력 * 2 로 하나의 적을 공격합니다.",
-                    SingleAction = (player) =>
+                    SingleAction = (player,monster) =>
                     {
-                        int damage = (int)(player.Atk * 2);
-                        return damage;
+                        int playerDamage = (int)(player.Atk * 2);
+                        Console.WriteLine($"Lv.{monster.Level} {monster.Name} 을(를) 맞췄습니다. [데미지 : {playerDamage}]");
+                        Console.WriteLine();
+                        Console.WriteLine($"Lv.{monster.Level} {monster.Name}");
+                        Console.Write($"HP {monster.HP} -> ");
+                        player.Mp -= player.Skills[1].MPCost;
+                        if (monster.HP - playerDamage > 0)
+                        {
+                            monster.HP -= playerDamage;
+                            Console.WriteLine(monster.HP);
+                        }
+                        else
+                        {
+                            monster.HP = 0;
+                            Console.WriteLine("Dead");
+                        }
+
+                    }
+                });
+                Skills.Add(new Skill
+                {
+                    Name = "더블 스트라이크",
+                    MPCost = 15,
+                    isMunti = true,
+                    Description = "공격력 * 1.5 로 2명의 적을 랜덤으로 공격합니다.",
+                    MultipleAction = (player, monster) =>
+                    {
+                        int playerDamage = (int)(player.Atk * 1.5);
+                        List<Monster> selectedMonsters = monster.OrderBy(x => Guid.NewGuid()).Take(2).ToList();
+                        foreach (Monster enemy in selectedMonsters)
+                        {
+                            Console.WriteLine($"Lv.{enemy.Level} {enemy.Name} 을(를) 맞췄습니다. [데미지 : {playerDamage}]");
+                            Console.WriteLine();
+                            Console.WriteLine($"Lv.{enemy.Level} {enemy.Name}");
+                            Console.Write($"HP {enemy.HP} -> ");
+                            player.Mp -= player.Skills[2].MPCost;
+                            if (enemy.HP - playerDamage > 0)
+                            {
+                                enemy.HP -= playerDamage;
+                                Console.WriteLine(enemy.HP);
+                            }
+                            else
+                            {
+                                enemy.HP = 0;
+                                Console.WriteLine("Dead");
+                            }
+                            Console.WriteLine();
+                        }
                     }
                 });
             }
@@ -188,13 +262,61 @@ namespace SpartaDungeonBattle
 
                 Skills.Add(new Skill
                 {
+                    
                     Name = "파이어볼",
                     MPCost = 10,
+                    isMunti = false,
                     Description = "공격력 * 1.5 로 하나의 적을 공격합니다.", 
-                    SingleAction = (player) =>
+                    SingleAction = (player,monster) =>
                     {
-                        int damage = (int)(player.Atk * 1.5);
-                        return damage;
+                        int playerDamage = (int)(player.Atk * 1.5);
+                        Console.WriteLine($"Lv.{monster.Level} {monster.Name} 을(를) 맞췄습니다. [데미지 : {playerDamage}]");
+                        Console.WriteLine();
+                        Console.WriteLine($"Lv.{monster.Level} {monster.Name}");
+                        Console.Write($"HP {monster.HP} -> ");
+                        player.Mp -= player.Skills[1].MPCost;
+                        if (monster.HP - playerDamage > 0)
+                        {
+                            monster.HP -= playerDamage;
+                            Console.WriteLine(monster.HP);
+                        }
+                        else
+                        {
+                            monster.HP = 0;
+                            Console.WriteLine("Dead");
+                        }
+                    }
+                });
+
+                Skills.Add(new Skill
+                {
+                    Name = "메테오 스트라이크",
+                    MPCost = 25,
+                    isMunti = true,
+                    Description = "공격력 * 1.8배로 적을  모두 공격합니다.",
+                    MultipleAction = (player, monster) =>
+                    {
+                        int playerDamage = (int)(player.Atk * 1.8);
+                        List<Monster> selectedMonsters = monster;
+                        foreach (Monster enemy in selectedMonsters)
+                        {
+                            Console.WriteLine($"Lv.{enemy.Level} {enemy.Name} 을(를) 맞췄습니다. [데미지 : {playerDamage}]");
+                            Console.WriteLine();
+                            Console.WriteLine($"Lv.{enemy.Level} {enemy.Name}");
+                            Console.Write($"HP {enemy.HP} -> ");
+                            player.Mp -= player.Skills[2].MPCost;
+                            if (enemy.HP - playerDamage > 0)
+                            {
+                                enemy.HP -= playerDamage;
+                                Console.WriteLine(enemy.HP);
+                            }
+                            else
+                            {
+                                enemy.HP = 0;
+                                Console.WriteLine("Dead");
+                            }
+                            Console.WriteLine();
+                        }
                     }
                 });
             }
@@ -205,7 +327,7 @@ namespace SpartaDungeonBattle
         public static void GameDataSetting(int set)
         {
             // 프로젝트 경로와, 솔루션 명을 활용하여 파일경로를 설정하고 해당 파일을 읽기
-            string projectPath = Directory.GetParent(Environment.CurrentDirectory).Parent.FullName;
+            string projectPath = Directory.GetCurrentDirectory();
             string solutionName = Assembly.GetEntryAssembly().GetName().Name;
 
             // 게임 저장을 위한 경로 저장
