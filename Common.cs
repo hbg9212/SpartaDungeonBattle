@@ -181,5 +181,37 @@ namespace SpartaDungeonBattle
                 Console.WriteLine("잘못된 입력입니다.");
             }
         }
+
+        public static void JobStats(string job)
+        {
+            switch (job)
+            {
+                case "전사":
+                    player.Atk = 10; 
+                    player.Def = 5;  
+                    player.Hp = 100; 
+                    break;
+                case "마법사":
+                    player.Atk = 5;  
+                    player.Def = 3;  
+                    player.Hp = 80;  
+                    break;
+                case "도적":
+                    player.Atk = 8;  
+                    player.Def = 2;  
+                    player.Hp = 90;  
+                    break;
+                default:
+                    // 기본 값 또는 처리 로직 추가
+                    break;
+            }
+        }
+
+
+
+
+
+
+
     }
 }

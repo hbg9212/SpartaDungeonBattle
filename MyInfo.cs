@@ -87,14 +87,17 @@ namespace SpartaDungeonBattle
                 {
                     case 1:
                         player.Job = "전사";
+                        JobStats(player.Job);
                         break;
 
                     case 2:
                         player.Job = "마법사";
+                        JobStats(player.Job);
                         break;
 
                     case 3:
                         player.Job = "도적";
+                        JobStats(player.Job);
                         break;
                 }
                 DisplayMyInfo();
