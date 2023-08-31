@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Reflection;
 using static SpartaDungeonBattle.Program;
 
@@ -45,6 +46,9 @@ namespace SpartaDungeonBattle
             public int Exp { get; set; }
             public int DungeonFloor { get; set; }
             public bool Initialized { get; set; }
+            
+            [JsonIgnore]
+            public List<Skill> Skills { get; set; } = new List<Skill>();
 
 
             public void InitializePlayer()
@@ -58,8 +62,26 @@ namespace SpartaDungeonBattle
                 Gold = 1000;
                 DungeonFloor = 1;
             }
-        }
+            public int Damage()
+            {
+                Random rand = new Random();
+                double eAtk = Atk * 0.1;
+                int roundedeAtk = (int)Math.Ceiling(eAtk);
+                int finalDamage = rand.Next((int)Atk - roundedeAtk, (int)Atk + roundedeAtk + 1);
 
+                return finalDamage;
+            }
+        }
+        public class Skill
+        {
+            public string Name { get; set; }
+            public int MPCost { get; set; }
+            public string Description { get; set; }
+            public Func<Character, int> SingleAction { get; set; }
+            public Func<Character, int> MultipleAction { get; set; }
+
+            public int amage { get; set; }
+        }
         public class Item
         {
             public int ItemId { get; set; }
@@ -83,7 +105,7 @@ namespace SpartaDungeonBattle
             public string Name { get; set; }
             public int Level { get; set; }
             public int HP { get; set; }
-            
+
             [JsonConstructor]
             public Monster(string name, int level, int hp)
             {
@@ -108,6 +130,25 @@ namespace SpartaDungeonBattle
             public int BaseMp { get; set; }
             public int BaseAtk { get; set; }
             public int BaseDef { get; set; }
+
+            public List<Skill> Skills { get; set; } = new List<Skill>();
+
+            public Job()
+            {
+                Skills.Add(new Skill
+                {
+                    Name = "기본 공격",
+                    MPCost = 0,
+                    Description = "기본 공격을 수행합니다.",
+                    SingleAction = (player) =>
+                    {
+                        int damage = player.Damage();
+                        return damage;
+                    }
+                }); 
+            }
+
+           
         }
 
         public class Warrior : Job
@@ -119,6 +160,18 @@ namespace SpartaDungeonBattle
                 BaseMp = 30;
                 BaseAtk = 10;
                 BaseDef = 5;
+
+                Skills.Add(new Skill
+                {
+                    Name = "알파 스트라이크",
+                    MPCost = 10,
+                    Description = "공격력 * 2 로 하나의 적을 공격합니다.",
+                    SingleAction = (player) =>
+                    {
+                        int damage = (int)(player.Atk * 2);
+                        return damage;
+                    }
+                });
             }
 
         }
@@ -132,6 +185,18 @@ namespace SpartaDungeonBattle
                 BaseMp = 50;
                 BaseAtk = 15;
                 BaseDef = 3;
+
+                Skills.Add(new Skill
+                {
+                    Name = "파이어볼",
+                    MPCost = 10,
+                    Description = "공격력 * 1.5 로 하나의 적을 공격합니다.", 
+                    SingleAction = (player) =>
+                    {
+                        int damage = (int)(player.Atk * 1.5);
+                        return damage;
+                    }
+                });
             }
         }
 

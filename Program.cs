@@ -56,6 +56,7 @@ namespace SpartaDungeonBattle
             player.Mp = player.MaxMP = selectedJob.BaseMp;
             player.Atk = selectedJob.BaseAtk;
             player.Def = selectedJob.BaseDef;
+            player.Skills = selectedJob.Skills;
             player.Initialized = true;
             Console.Clear() ;
             Console.WriteLine($"{player.Job} (으)로 전직하였습니다.");

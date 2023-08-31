@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Buffers.Text;
+using System.Reflection;
 using System.Reflection.Emit;
+using System.Security.Cryptography;
 using Newtonsoft.Json;
 using static SpartaDungeonBattle.Common;
 using static SpartaDungeonBattle.Program;
@@ -17,6 +19,7 @@ namespace SpartaDungeonBattle
         public static int baseMP = 0;
         public static void DisplayBattle()
         {
+            initSkill();
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("Battle!");
@@ -42,10 +45,14 @@ namespace SpartaDungeonBattle
                     isAttack = true;
                     DisplayBattlePhase();
                     break;
+                case 2:
+                    DisplaySkillPhase();
+                    break;
             }
         }
         static void DisplayBattlePhase()
         {
+            int avoid = rand.Next(0, 101);
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("Battle!");
@@ -72,18 +79,86 @@ namespace SpartaDungeonBattle
                     DisplayBattle();
                     break;
                 default:
-                    DisplayPlayerPhase(input-1);
+                    if (avoid <= 10) DisplayAvoid(input - 1);
+                    else DisplayPlayerPhase(input-1,0);
                     break;
 
             }
         }
-        static void DisplayPlayerPhase(int num)
-        { 
+        static void DisplaySkillPhase()
+        {
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Battle!");
+            Console.ResetColor();
+            Console.WriteLine();
+            PrintMonsters(isAttack);
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine("[내정보]");
+            Console.WriteLine($"Lv.{player.Level} {player.Name} ({player.Job})");
+            Console.WriteLine($"HP {player.Hp}/{player.MaxHP}");
+            Console.WriteLine($"MP {player.Mp}/{player.MaxMP}");
+            Console.WriteLine();
+            int index = 1;
+            for(int i = 1;i<player.Skills.Count;i++)
+            {
+                Skill skill = player.Skills[i];
+                Console.WriteLine($"{index}. {skill.Name} - MP {skill.MPCost}");
+                Console.WriteLine($" {skill.Description}");
+            }
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("0. 취소");
+            Console.ResetColor();
+            Console.WriteLine();
+            Console.WriteLine("원하시는 행동을 입력해주세요.");
+            int input = CheckValidInput(0, player.Skills.Count);
+            switch (input)
+            {
+                case 0:
+                    DisplayBattle();
+                    break;
+                default:
+                    isAttack = true;
+                    DisplayPlayerSkillPhase(input);
+                    break;
 
+            }
+        }
+        static void DisplayAvoid(int num)
+        {
             Monster monster = battleMonsters[num];
-            int playerDamage = Damage();
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Battle!");
+            Console.ResetColor();
+            Console.WriteLine();
+            Console.WriteLine($"{player.Name} 의 공격!");
+            Console.WriteLine($"Lv.{monster.Level} {monster.Name} 을(를) 공격했지만 아무일도 일어나지 않았습니다.");
+            Console.WriteLine();
+            Console.WriteLine("0. 다음");
+            Console.WriteLine();
+            int input = CheckValidInput(0, 0);
+            if(input == 0)
+            {
+                DisplayEnemyPhase(0);
+            }
+        }
+        static void DisplayPlayerPhase(int num, int skillnum)
+        {
+            Monster monster = battleMonsters[num];
+            int playerDamage = player.Skills[skillnum].SingleAction(player);
             int critical = rand.Next(0, 101);
             string cri = "";
+            if (skillnum == 0)
+            {
+                if (critical <= 15)
+                {
+                    playerDamage = (int)(playerDamage * 1.6);
+                    cri = " - 치명타 공격!!";
+                }
+                else cri = "";
+            }
             if (monster.HP == 0)
             {
                 DisplayBattlePhase();
@@ -95,12 +170,6 @@ namespace SpartaDungeonBattle
             Console.ResetColor();
             Console.WriteLine();
             Console.WriteLine($"{player.Name} 의 공격!");
-            if (critical <= 15)
-            {
-                playerDamage = (int)(playerDamage * 1.6);
-                cri = " - 치명타 공격!!";
-            }
-            else cri = "";
             Console.WriteLine($"Lv.{monster.Level} {monster.Name} 을(를) 맞췄습니다. [데미지 : {playerDamage}]{cri}");
             Console.WriteLine();
             Console.WriteLine($"Lv.{monster.Level} {monster.Name}");
@@ -115,10 +184,11 @@ namespace SpartaDungeonBattle
                 monster.HP = 0;
                 Console.WriteLine("Dead");
             }
+
             Console.WriteLine();
             Console.WriteLine("0. 다음");
             Console.WriteLine();
-            int input = CheckValidInput(0,0);
+            int input = CheckValidInput(0, 0);
             int sumHp = 0;
             foreach (Monster M in battleMonsters)
             {
@@ -131,6 +201,41 @@ namespace SpartaDungeonBattle
                     DisplayEnemyPhase(0);
                 }
                 else DisplayResult();
+            }
+        }
+        static void DisplayPlayerSkillPhase(int num)
+        {
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Battle!");
+            Console.ResetColor();
+            Console.WriteLine();
+            PrintMonsters(isAttack);
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine("[내정보]");
+            Console.WriteLine($"Lv.{player.Level} {player.Name} ({player.Job})");
+            Console.WriteLine($"HP {player.Hp}/{player.MaxHP}");
+            Console.WriteLine($"MP {player.Mp}/{player.MaxMP}");
+            Console.WriteLine();
+            Skill skill= player.Skills[num];
+            Console.WriteLine($"현재 스킬 : {skill.Name} - MP {skill.MPCost}");
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("0. 취소");
+            Console.ResetColor();
+            Console.WriteLine();
+            Console.WriteLine("원하시는 행동을 입력해주세요.");
+            int input = CheckValidInput(0, battleMonsters.Count);
+            switch (input)
+            {
+                case 0:
+                    isAttack = false;
+                    DisplaySkillPhase();
+                    break;
+                default:
+                    DisplayPlayerPhase(input - 1,num);
+                    break;
+
             }
         }
         static void DisplayEnemyPhase(int num)
@@ -213,6 +318,8 @@ namespace SpartaDungeonBattle
             Console.WriteLine($"HP {baseHP} -> {player.Hp}");
             Console.Write($"Exp {baseExp} -> {player.Exp}");
             Console.WriteLine();
+            Console.WriteLine("[획득 아이템]");
+            Console.WriteLine();
             Console.WriteLine("0. 다음");
             Console.WriteLine();
             int input = CheckValidInput(0, 0);
@@ -258,15 +365,6 @@ namespace SpartaDungeonBattle
             }
 
         }
-
-        static int Damage()
-        { 
-            double eAtk = player.Atk * 0.1;
-            int roundedeAtk = (int)Math.Ceiling(eAtk);
-            int finalDamage = rand.Next((int)player.Atk - roundedeAtk, (int)player.Atk + roundedeAtk + 1);
-
-            return finalDamage;
-        }
         static void dungeonClear()
         {
             player.DungeonFloor++;
@@ -293,6 +391,20 @@ namespace SpartaDungeonBattle
             player.Mp = player.MaxMP;
             player.Atk += 0.5;
             player.Def += 1;
+        }
+        static void initSkill()
+        {
+            if (player.Skills.Count == 0)
+            {
+                if (player.Job == "전사")
+                {
+                    player.Skills = jobs[0].Skills;
+                }
+                else
+                {
+                    player.Skills = jobs[1].Skills;
+                }
+            }
         }
     }
 }
