@@ -22,3 +22,19 @@
 14. 회복 아이템
 15. 스테이지 추가
 16. 게임 저장하기
+
+##### 주요기능 설명
+Program.cs : 솔루션을 실행하는 Main 메소드(이외 별 기능 없음)
+Common.cs : 스파르타 던전 배틀 Text 게임에서 사용되는 공통 기능, 객체를 담당
+Battle.cs : 전투 시작, 몬스터 생성, 공격, 방어, 스킬 사용을 담당
+CharacterInfo.cs : 직업별 사용 가능 스킬 및 직업 선택시 초기 스텟을 담당
+Inventory.cs : 인벤토리, 장착, 아이템 정렬 담당
+MyInfo.cs : 내정보 화인 화면 출력 메소드
+Portion.cs : 회복 아이템 사용 담당
+Shop.cs : 상점 아이템 구매 및 아이템 판매 담당
+
+###### 팀 노션
+https://www.notion.so/06-8e70aeedeccb423f90c348b49ab40fa9
+
+##### 과제 노션
+https://teamsparta.notion.site/Chapter-2-1-699e6d8907464d049aa63d3bd198d537
